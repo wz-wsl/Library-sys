@@ -4,10 +4,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 仓库布局
 
-本目录包含若依 RuoYi v3.9.2 前后端分离项目的两个独立工程，开发时需要同时运行：
+本目录是一个 git 仓库（`main` 分支），包含若依 RuoYi v3.9.2 前后端分离项目的两个独立工程，开发时需要同时运行：
 
-- `RuoYi-Vue/` —— 后端，Spring Boot 3.5 + Java 17 的 Maven 多模块工程（是一个 git 仓库，springboot3 分支）。
-- `RuoYi-Vue3-3.9.2/` —— 前端，Vue 3 + Vite + Element Plus + Pinia（不是 git 仓库）。
+- `RuoYi-Vue/` —— 后端，Spring Boot 3.5 + Java 17 的 Maven 多模块工程。
+- `RuoYi-Vue3-3.9.2/` —— 前端，Vue 3 + Vite + Element Plus + Pinia。
+
+后端原本是从 gitee `y_project/RuoYi-Vue` 克隆的 springboot3 分支，它原来的 `.git` 改名保存在 `RuoYi-Vue/.git-upstream-backup/`（已加入忽略），对比或合并上游时用 `git --git-dir=RuoYi-Vue/.git-upstream-backup --work-tree=RuoYi-Vue ...`。两个子工程各自的 `.gitignore` 依然生效。
 
 两个工程都没有测试代码（任何模块下都没有 `src/test`），也没有 lint/格式化配置。修改后的验证方式是编译/构建，再在运行中的应用里实际操作。
 
