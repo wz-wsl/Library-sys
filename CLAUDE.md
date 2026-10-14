@@ -42,7 +42,8 @@ npm 11 会跳过 `esbuild` 等包的 install 脚本，但已验证 esbuild 和 `
 - **MySQL**：数据库名 `ry-vue`，由 `RuoYi-Vue/sql/ry_20260417.sql` 和 `RuoYi-Vue/sql/quartz.sql` 初始化。连接信息在 `ruoyi-admin/src/main/resources/application-druid.yml`。
 - **Redis**：`localhost:6379`，配置在 `application.yml`。登录离不开 Redis，验证码和登录会话都存在里面。
 - **默认账号**：`admin/admin123`。
-- **上传目录**：`ruoyi.profile`（`D:/ruoyi/uploadPath`），对外通过 `/profile/**` 访问。
+- **本地环境**：MySQL（root/root）和 Redis（无密码）跑在 WSL 的 Docker 容器 `mysql`、`redis` 中，端口映射到 Windows 的 3306/6379。在 WSL 里执行 `docker exec` 时，命令中的 `$VAR` 会先被 WSL 这一侧的 shell 展开，需要在容器内求值的命令要写成脚本或放进 `sh -c` 的 heredoc 里。
+- **上传目录**：`ruoyi.profile`（`D:/Program/RuoYi/upload`，已在 git 中忽略），对外通过 `/profile/**` 访问。
 
 ## 后端架构
 
