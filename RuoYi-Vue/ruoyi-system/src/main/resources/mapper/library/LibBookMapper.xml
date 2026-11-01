@@ -102,4 +102,10 @@
         </set>
         where book_id = #{bookId}
     </update>
+    <delete id="deleteLibBookByIds" parameterType="Long">
+        delete from lib_book where book_id in
+        <foreach collection="array" item="bookId" open="(" close=")" separator=",">
+            #{bookId}
+        </foreach>
+    </delete>
 </mapper>

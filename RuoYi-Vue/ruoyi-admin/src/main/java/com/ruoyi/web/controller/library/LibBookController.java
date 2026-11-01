@@ -50,4 +50,11 @@ public class LibBookController extends BaseController {
         libBook.setUpdateBy(getUsername());
         return toAjax(libBookService.updateLibBook(libBook));
     }
+
+    @PreAuthorize("@ss.hasPermi('library:book:remove')")
+    @Log(title = "图书信息", businessType = BusinessType.DELETE)
+    @DeleteMapping("/remove/{bookIds}")
+    public AjaxResult remove(@PathVariable("bookIds") Long[] bookIds) {
+        return toAjax(libBookService.deleteLibBookByIds(bookIds));
+    }
 }

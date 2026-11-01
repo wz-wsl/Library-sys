@@ -58,4 +58,19 @@ public class LibBookServiceImpl implements ILibBookService {
         }
         return libBookMapper.updateLibBook(libBook);
     }
+
+    @Override
+    public int deleteLibBookByIds(Long[] bookIds) {
+        for (Long bookId : bookIds) {
+            LibBook book = libBookMapper.selectLibBookById(bookId);
+            if (book == null) {
+                continue;                                  // 已经不存在的，跳过
+            }
+            int borrowed = book.getTotalCount() - book.getStockCount();
+            if (borrowed > 0) {
+                throw new ServiceException("《" + book.getBookName() + "》还有 " + borrowed + " 本未归还，不能删除");
+            }
+        }
+        return libBookMapper.deleteLibBookByIds(bookIds);
+    }
 }

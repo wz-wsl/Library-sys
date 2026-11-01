@@ -18,4 +18,5 @@ public interface ILibBookService {
     int insertLibBook(LibBook libBook);
     LibBook selectLibBookById(Long id);
     int updateLibBook(LibBook libBook);
+    int deleteLibBookByIds(Long[] id);
 }

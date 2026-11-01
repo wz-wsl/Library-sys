@@ -18,4 +18,5 @@ public interface LibBookMapper {
     int insertLibBook(LibBook libBook);
     LibBook selectLibBookById(Long bookId);
     int updateLibBook(LibBook libBook);
+    int deleteLibBookByIds(Long[] bookId);
 }
