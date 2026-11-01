@@ -16,3 +16,20 @@ export function addBook(data) {
         data: data
     })
 }
+
+// 查询图书详细
+export function getBook(bookId) {
+  return request({
+    url: '/library/book/' + bookId,
+    method: 'get'
+  })
+}
+
+// 修改图书
+export function updateBook(data) {
+  return request({
+    url: '/library/book/edit',
+    method: 'put',
+    data: data
+  })
+}

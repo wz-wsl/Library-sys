@@ -50,7 +50,17 @@
       <el-table-column label="出版社" align="center" prop="publisher" />
       <el-table-column label="馆藏总数" align="center" prop="totalCount" />
       <el-table-column label="可借数量" align="center" prop="stockCount" />
-
+      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+        <template #default="scope">
+          <el-button
+            link
+            type="primary"
+            icon="Edit"
+            @click="handleUpdate(scope.row)"
+            v-hasPermi="['library:book:edit']"
+          >修改</el-button>
+        </template>
+      </el-table-column>
     </el-table>
 
     <!-- 分页 -->
@@ -101,7 +111,7 @@
 
 <script setup name="Book">
 
-import { listBook, addBook } from "@/api/library/book"
+import { listBook, addBook, getBook, updateBook } from "@/api/library/book"
 
 const bookList = ref([])     // 表格数据
 const loading = ref(true)    // 是否显示"加载中"
@@ -169,15 +179,34 @@ function cancel() {
   open.value = false
   reset()
 }
+/** 提交按钮 */
 function submitForm() {
   proxy.$refs["bookRef"].validate(valid => {
     if (valid) {
-      addBook(form.value).then(() => {
-        proxy.$modal.msgSuccess("新增成功")
-        open.value = false
-        getList()
-      })
+      if (form.value.bookId != undefined) {
+        updateBook(form.value).then(() => {
+          proxy.$modal.msgSuccess("修改成功")
+          open.value = false
+          getList()
+        })
+      } else {
+        addBook(form.value).then(() => {
+          proxy.$modal.msgSuccess("新增成功")
+          open.value = false
+          getList()
+        })
+      }
     }
+  })
+}
+
+/** 修改按钮操作 */
+function handleUpdate(row) {
+  reset()
+  getBook(row.bookId).then(res => {
+    form.value = res.data
+    open.value = true
+    title.value = "修改图书"
   })
 }
 </script>
