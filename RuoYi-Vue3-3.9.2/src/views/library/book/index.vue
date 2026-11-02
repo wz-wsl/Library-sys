@@ -40,9 +40,20 @@
                 v-hasPermi="['library:book:add']"
               >新增</el-button>
             </el-col>
+            <el-col :span="1.5">
+              <el-button
+                type="danger"
+                plain
+                icon="Delete"
+                :disabled="multiple"
+                @click="handleDelete"
+                v-hasPermi="['library:book:remove']"
+              >删除</el-button>
+            </el-col>
           </el-row>
     <!-- 表格 -->
-    <el-table v-loading="loading" :data="bookList">
+    <el-table v-loading="loading" :data="bookList" @selection-change="handleSelectionChange">
+      <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="图书ID" align="center" prop="bookId" />
       <el-table-column label="书名" align="center" prop="bookName" />
 
@@ -59,6 +70,13 @@
             @click="handleUpdate(scope.row)"
             v-hasPermi="['library:book:edit']"
           >修改</el-button>
+          <el-button
+            link
+            type="primary"
+            icon="Delete"
+            @click="handleDelete(scope.row)"
+            v-hasPermi="['library:book:remove']"
+          >删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -111,7 +129,7 @@
 
 <script setup name="Book">
 
-import { listBook, addBook, getBook, updateBook } from "@/api/library/book"
+import { listBook, addBook, getBook, updateBook, delBook } from "@/api/library/book"
 
 const bookList = ref([])     // 表格数据
 const loading = ref(true)    // 是否显示"加载中"
@@ -131,6 +149,9 @@ const form = ref({})        // 弹窗表单的数据
 const rules = ref({         // 表单校验规则
   bookName: [{ required: true, message: "书名不能为空", trigger: "blur" }]
 })
+
+const ids = ref([])             // 选中的图书ID数组
+const multiple = ref(true)   // 删除按钮是否禁用
 
 /** 查询图书列表 */
 function getList() {
@@ -209,4 +230,22 @@ function handleUpdate(row) {
     title.value = "修改图书"
   })
 }
+
+/** 多选框选中数据 */
+function handleSelectionChange(selection) {
+  ids.value = selection.map(item => item.bookId)
+  multiple.value = !selection.length
+}
+
+/** 删除按钮操作 */
+function handleDelete(row) {
+  const bookIds = row.bookId || ids.value
+  proxy.$modal.confirm('是否确认删除图书编号为"' + bookIds + '"的数据项？').then(() => {
+    return delBook(bookIds)
+  }).then(() => {
+    getList()
+    proxy.$modal.msgSuccess("删除成功")
+  }).catch(() => {})
+}
+
 </script>

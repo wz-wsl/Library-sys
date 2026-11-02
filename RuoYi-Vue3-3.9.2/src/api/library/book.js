@@ -33,3 +33,11 @@ export function updateBook(data) {
     data: data
   })
 }
+
+// 删除图书
+export function delBook(bookIds) {
+  return request({
+    url: '/library/book/remove/' + bookIds,
+    method: 'delete'
+  })
+}
