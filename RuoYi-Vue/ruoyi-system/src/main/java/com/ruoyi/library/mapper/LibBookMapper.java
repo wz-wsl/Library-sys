@@ -17,6 +17,10 @@ public interface LibBookMapper {
     List<LibBook> selectLibBookList(LibBook libBook);
     int insertLibBook(LibBook libBook);
     LibBook selectLibBookById(Long bookId);
+    LibBook selectLibBookByIdForUpdate(Long bookId);
+    int decreaseAvailableStock(Long bookId);
+    int restoreAvailableStock(Long bookId);
+    int countBorrowHistory(Long bookId);
     int updateLibBook(LibBook libBook);
     int deleteLibBookByIds(Long[] bookId);
 }

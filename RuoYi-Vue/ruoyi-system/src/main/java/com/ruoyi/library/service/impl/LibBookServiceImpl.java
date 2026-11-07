@@ -3,11 +3,15 @@ package com.ruoyi.library.service.impl;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.library.domain.LibBook;
 import com.ruoyi.library.mapper.LibBookMapper;
+import com.ruoyi.library.mapper.LibCategoryMapper;
 import com.ruoyi.library.service.ILibBookService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Isolation;
 
 import java.util.List;
+import java.util.Arrays;
 
 /**
  * 图书信息 服务层处理
@@ -16,6 +20,9 @@ import java.util.List;
 public class LibBookServiceImpl implements ILibBookService {
     @Autowired
     private LibBookMapper libBookMapper;
+
+    @Autowired
+    private LibCategoryMapper libCategoryMapper;
 
     /**
      * 查询图书列表
@@ -29,7 +36,9 @@ public class LibBookServiceImpl implements ILibBookService {
     }
 
     @Override
+    @Transactional
     public int insertLibBook(LibBook libBook) {
+        checkCategoryForWrite(libBook.getCategoryId());
         libBook.setStockCount(libBook.getTotalCount());
         return libBookMapper.insertLibBook(libBook);
     }
@@ -40,11 +49,13 @@ public class LibBookServiceImpl implements ILibBookService {
     }
 
     @Override
+    @Transactional
     public int updateLibBook(LibBook libBook) {
+        checkCategoryForWrite(libBook.getCategoryId());
 
         // 只有改了馆藏总数，才需要重新算可借数量
         if (libBook.getTotalCount() != null) {
-            LibBook old = libBookMapper.selectLibBookById(libBook.getBookId());   // 先查出修改前的数据
+            LibBook old = libBookMapper.selectLibBookByIdForUpdate(libBook.getBookId());
             if (old == null) {
                 throw new ServiceException("图书不存在");
             }
@@ -59,10 +70,19 @@ public class LibBookServiceImpl implements ILibBookService {
         return libBookMapper.updateLibBook(libBook);
     }
 
+    // 和删除分类共用行锁，避免检查通过后分类被另一个请求删除。
+    private void checkCategoryForWrite(Long categoryId) {
+        if (categoryId != null && libCategoryMapper.selectLibCategoryByIdForUpdate(categoryId) == null) {
+            throw new ServiceException("所选分类不存在");
+        }
+    }
+
     @Override
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public int deleteLibBookByIds(Long[] bookIds) {
-        for (Long bookId : bookIds) {
-            LibBook book = libBookMapper.selectLibBookById(bookId);
+        Long[] ids = Arrays.stream(bookIds).distinct().sorted().toArray(Long[]::new);
+        for (Long bookId : ids) {
+            LibBook book = libBookMapper.selectLibBookByIdForUpdate(bookId);
             if (book == null) {
                 continue;                                  // 已经不存在的，跳过
             }
@@ -70,7 +90,10 @@ public class LibBookServiceImpl implements ILibBookService {
             if (borrowed > 0) {
                 throw new ServiceException("《" + book.getBookName() + "》还有 " + borrowed + " 本未归还，不能删除");
             }
+            if (libBookMapper.countBorrowHistory(bookId) > 0) {
+                throw new ServiceException("《" + book.getBookName() + "》已有借阅记录，请下架以保留历史");
+            }
         }
-        return libBookMapper.deleteLibBookByIds(bookIds);
+        return libBookMapper.deleteLibBookByIds(ids);
     }
 }

@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ruoyi.library.mapper.LibCategoryMapper">
+
+    <resultMap id="LibCategoryResult" type="LibCategory">
+        <id property="categoryId" column="category_id"/>
+        <result property="parentId" column="parent_id"/>
+        <result property="categoryName" column="category_name"/>
+        <result property="orderNum" column="order_num"/>
+        <result property="status" column="status"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <sql id="selectLibCategoryVo">
+        select category_id, parent_id, category_name, order_num, status,
+               create_by, create_time, update_by, update_time, remark
+        from lib_category
+    </sql>
+
+    <select id="selectLibCategoryList" parameterType="LibCategory" resultMap="LibCategoryResult">
+        <include refid="selectLibCategoryVo"/>
+        <where>
+            <if test="categoryName != null and categoryName != ''">
+                AND category_name like concat('%', #{categoryName}, '%')
+            </if>
+            <if test="status != null and status != ''">
+                AND status = #{status}
+            </if>
+        </where>
+        order by parent_id, order_num, category_id
+    </select>
+    <select id="selectLibCategoryById" parameterType="Long" resultMap="LibCategoryResult">
+        <include refid="selectLibCategoryVo"/>
+        where category_id = #{categoryId}
+    </select>
+
+    <insert id="insertLibCategory" parameterType="LibCategory"
+            useGeneratedKeys="true" keyProperty="categoryId">
+        insert into lib_category (
+            parent_id, category_name,
+            <if test="orderNum != null">order_num,</if>
+            <if test="status != null and status != ''">status,</if>
+            <if test="remark != null">remark,</if>
+            create_by, create_time
+        ) values (
+            #{parentId}, #{categoryName},
+            <if test="orderNum != null">#{orderNum},</if>
+            <if test="status != null and status != ''">#{status},</if>
+            <if test="remark != null">#{remark},</if>
+            #{createBy}, sysdate()
+        )
+    </insert>
+
+    <update id="updateLibCategory" parameterType="LibCategory">
+        update lib_category
+        set category_name = #{categoryName},
+            update_by = #{updateBy},
+            update_time = sysdate()
+        where category_id = #{categoryId}
+    </update>
+
+    <update id="moveLibCategory" parameterType="LibCategory">
+        update lib_category
+        set parent_id = #{parentId},
+            update_by = #{updateBy},
+            update_time = sysdate()
+        where category_id = #{categoryId}
+    </update>
+    <select id="countChildrenByCategoryId" resultType="int">
+        select count(*) from lib_category where parent_id = #{categoryId}
+    </select>
+
+    <select id="countInCategorySubtree" resultType="int">
+        WITH RECURSIVE category_tree AS (
+            SELECT category_id
+            FROM lib_category
+            WHERE category_id = #{categoryId}
+            UNION DISTINCT
+            SELECT child.category_id
+            FROM lib_category child
+            JOIN category_tree parent ON child.parent_id = parent.category_id
+        )
+        SELECT COUNT(*) FROM category_tree WHERE category_id = #{newParentId}
+    </select>
+
+    <select id="countBooksByCategoryId" resultType="int">
+        select count(*) from lib_book where category_id = #{categoryId}
+    </select>
+
+    <select id="selectLibCategoryByIdForUpdate" resultMap="LibCategoryResult">
+        <include refid="selectLibCategoryVo"/>
+        where category_id = #{categoryId} for update
+    </select>
+
+    <delete id="deleteLibCategoryByIds">
+        delete from lib_category where category_id in
+        <foreach collection="array" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+</mapper>

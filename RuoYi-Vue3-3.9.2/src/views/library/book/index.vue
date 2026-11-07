@@ -19,6 +19,16 @@
                @keyup.enter="handleQuery"
             />
          </el-form-item>
+         <el-form-item v-if="canListCategories" label="分类" prop="categoryId">
+            <el-select v-model="queryParams.categoryId" clearable placeholder="请选择分类" style="width: 200px">
+              <el-option
+                v-for="category in categoryList"
+                :key="category.categoryId"
+                :label="category.categoryName"
+                :value="category.categoryId"
+              />
+            </el-select>
+         </el-form-item>
          <el-form-item label="状态" prop="status">
             <el-select v-model="queryParams.status" placeholder="图书状态" clearable style="width: 200px">
               <el-option label="上架" value="0" />
@@ -56,13 +66,23 @@
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="图书ID" align="center" prop="bookId" />
       <el-table-column label="书名" align="center" prop="bookName" />
+      <el-table-column v-if="canListCategories" label="分类" align="center">
+        <template #default="scope">
+          {{ getCategoryName(scope.row.categoryId) }}
+        </template>
+      </el-table-column>
 
       <el-table-column label="作者" align="center" prop="author" />
       <el-table-column label="出版社" align="center" prop="publisher" />
       <el-table-column label="馆藏总数" align="center" prop="totalCount" />
       <el-table-column label="可借数量" align="center" prop="stockCount" />
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+      <el-table-column label="操作" align="center" min-width="185">
         <template #default="scope">
+          <el-button
+            v-hasPermi="['library:borrow:add']" link type="primary"
+            :disabled="borrowing || scope.row.status !== '0' || !(scope.row.stockCount > 0)"
+            @click="handleBorrow(scope.row)"
+          >借书</el-button>
           <el-button
             link
             type="primary"
@@ -94,6 +114,17 @@
       <el-form ref="bookRef" :model="form" :rules="rules" label-width="80px">
         <el-form-item label="书名" prop="bookName">
           <el-input v-model="form.bookName" placeholder="请输入书名" />
+        </el-form-item>
+        <el-form-item v-hasPermi="['library:category:list']" label="分类" prop="categoryId">
+          <el-tree-select
+            v-model="form.categoryId"
+            :data="categoryOptions"
+            :props="{ value: 'categoryId', label: 'categoryName', children: 'children' }"
+            value-key="categoryId"
+            placeholder="请选择图书分类"
+            check-strictly
+            style="width: 100%"
+          />
         </el-form-item>
         <el-form-item label="作者" prop="author">
           <el-input v-model="form.author" placeholder="请输入作者" />
@@ -130,8 +161,11 @@
 <script setup name="Book">
 
 import { listBook, addBook, getBook, updateBook, delBook } from "@/api/library/book"
+import { listCategory } from "@/api/library/category"
+import { borrowBook } from "@/api/library/borrow"
 
 const bookList = ref([])     // 表格数据
+const borrowing = ref(false)
 const loading = ref(true)    // 是否显示"加载中"
 const total = ref(0)         // 总条数
 const { proxy } = getCurrentInstance()
@@ -140,12 +174,16 @@ const queryParams = ref({
   pageSize: 10,
   bookName: undefined,
   author: undefined,
+  categoryId: undefined,
   status: undefined
 })
 
 const open = ref(false)     // 弹窗是否显示
 const title = ref("")       // 弹窗标题
 const form = ref({})        // 弹窗表单的数据
+const canListCategories = computed(() => proxy.$auth.hasPermi('library:category:list'))
+const categoryList = ref([])
+const categoryOptions = ref([])
 const rules = ref({         // 表单校验规则
   bookName: [{ required: true, message: "书名不能为空", trigger: "blur" }]
 })
@@ -163,7 +201,22 @@ function getList() {
   })
 }
 
-getList()
+// 首次打开及从「我的借阅」返回时，都读取最新库存。
+onMounted(getList)
+let wasDeactivated = false
+onDeactivated(() => { wasDeactivated = true })
+onActivated(() => {
+  if (wasDeactivated) {
+    wasDeactivated = false
+    getList()
+  }
+})
+loadCategoryOptions().catch(error => console.error('加载分类失败', error))
+
+function getCategoryName(categoryId) {
+  if (categoryId == null) return '未分类'
+  return categoryList.value.find(category => category.categoryId === categoryId)?.categoryName ?? '—'
+}
 
 /** 搜索按钮操作 */
 function handleQuery() {
@@ -180,6 +233,7 @@ function resetQuery() {
 function reset() {
   form.value = {
     bookId: undefined,
+    categoryId: undefined,
     bookName: undefined,
     author: undefined,
     publisher: undefined,
@@ -188,11 +242,23 @@ function reset() {
     status: "0",
     remark: undefined
   }          // 默认状态为上架
-  proxy.resetForm("bookRef")       // 清空表单
+  proxy.$refs.bookRef?.clearValidate()
 }
 
-function handleAdd() {
+async function loadCategoryOptions() {
+  if (!canListCategories.value) return
+  const res = await listCategory()
+  categoryList.value = res.data
+  const categories = res.data.map(category => ({
+    ...category,
+    disabled: category.status === '1'
+  }))
+  categoryOptions.value = proxy.handleTree(categories, 'categoryId')
+}
+
+async function handleAdd() {
   reset()
+  await loadCategoryOptions()
   title.value = "新增图书"
   open.value = true
 }
@@ -222,13 +288,30 @@ function submitForm() {
 }
 
 /** 修改按钮操作 */
-function handleUpdate(row) {
+async function handleUpdate(row) {
   reset()
-  getBook(row.bookId).then(res => {
-    form.value = res.data
-    open.value = true
-    title.value = "修改图书"
-  })
+  const [res] = await Promise.all([getBook(row.bookId), loadCategoryOptions()])
+  form.value = res.data
+  title.value = "修改图书"
+  open.value = true
+}
+
+async function handleBorrow(row) {
+  if (borrowing.value) return
+  borrowing.value = true
+  try {
+    await proxy.$modal.confirm('确认借阅《' + row.bookName + '》吗？借期为 14 天。')
+    await borrowBook(row.bookId)
+    proxy.$modal.msgSuccess('借书成功，可在「我的借阅」查看')
+    getList()
+  } catch (error) {
+    if (error !== 'cancel' && error !== 'close') {
+      console.error('借书失败', error)
+      getList()
+    }
+  } finally {
+    borrowing.value = false
+  }
 }
 
 /** 多选框选中数据 */

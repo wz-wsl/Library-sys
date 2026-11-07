@@ -40,7 +40,18 @@
                 AND author like concat('%', #{author}, '%')
             </if>
             <if test="categoryId != null">
-                AND category_id = #{categoryId}
+                AND category_id IN (
+                    WITH RECURSIVE category_tree AS (
+                        SELECT category_id
+                        FROM lib_category
+                        WHERE category_id = #{categoryId}
+                        UNION DISTINCT
+                        SELECT child.category_id
+                        FROM lib_category child
+                        JOIN category_tree parent ON child.parent_id = parent.category_id
+                    )
+                    SELECT category_id FROM category_tree
+                )
             </if>
             <if test="status != null and status != ''">
                 AND status = #{status}
@@ -102,6 +113,24 @@
         </set>
         where book_id = #{bookId}
     </update>
+
+    <select id="selectLibBookByIdForUpdate" resultMap="LibBookResult">
+        <include refid="selectLibBookVo"/> where book_id = #{bookId} for update
+    </select>
+
+    <update id="decreaseAvailableStock">
+        update lib_book set stock_count = stock_count - 1
+        where book_id = #{bookId} and status = '0' and stock_count > 0
+    </update>
+
+    <update id="restoreAvailableStock">
+        update lib_book set stock_count = stock_count + 1
+        where book_id = #{bookId} and stock_count &lt; total_count
+    </update>
+
+    <select id="countBorrowHistory" resultType="int">
+        select count(*) from lib_borrow where book_id = #{bookId}
+    </select>
     <delete id="deleteLibBookByIds" parameterType="Long">
         delete from lib_book where book_id in
         <foreach collection="array" item="bookId" open="(" close=")" separator=",">
