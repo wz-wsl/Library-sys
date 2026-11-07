@@ -34,12 +34,12 @@
 ## 目录结构
 
 ```
-RuoYi-Vue/                                  后端（Maven 多模块）
+library-backend/                            后端（Maven 多模块）
 ├── ruoyi-admin/.../web/controller/library/     图书模块的 Controller
 ├── ruoyi-system/.../com/ruoyi/library/         图书模块的实体、Mapper、Service
 ├── ruoyi-system/src/main/resources/mapper/library/   Mapper XML
 └── sql/                                         数据库脚本
-RuoYi-Vue3-3.9.2/                           前端
+library-frontend/                           前端
 ├── src/api/library/                            图书模块的接口
 └── src/views/library/                          页面：book 图书信息、category 图书分类、borrow 我的借阅
 ```
@@ -54,7 +54,7 @@ RuoYi-Vue3-3.9.2/                           前端
 | `lib_book` | 图书信息，`total_count` 馆藏总数、`stock_count` 可借数量、`status` 0 上架 / 1 下架 |
 | `lib_borrow` | 借阅记录，`due_time` 应还时间、`return_time` 归还时间、`status` 0 借阅中 / 1 已归还 / 2 已逾期 |
 
-`RuoYi-Vue/sql/` 下的脚本：
+`library-backend/sql/` 下的脚本：
 
 | 脚本 | 作用 |
 |---|---|
@@ -85,7 +85,7 @@ Redis 使用默认的 `localhost:6379`，无密码。
 数据库连接在 `ruoyi-admin/src/main/resources/application-druid.yml` 中配置，上传目录在 `application.yml` 的 `ruoyi.profile` 中配置。
 
 ```bash
-cd RuoYi-Vue
+cd library-backend
 mvn clean package -Dmaven.test.skip=true
 java -jar ruoyi-admin/target/ruoyi-admin.jar
 ```
@@ -95,7 +95,7 @@ java -jar ruoyi-admin/target/ruoyi-admin.jar
 **3. 启动前端**
 
 ```bash
-cd RuoYi-Vue3-3.9.2
+cd library-frontend
 npm install --registry=https://registry.npmmirror.com
 npm run dev
 ```
@@ -113,4 +113,4 @@ npm run dev
 - 后端：[RuoYi-Vue](https://gitee.com/y_project/RuoYi-Vue)
 - 前端：[RuoYi-Vue3](https://github.com/yangzongzhuan/RuoYi-Vue3)
 
-若依框架采用 MIT 协议，原版权声明保留在 `RuoYi-Vue/LICENSE` 和 `RuoYi-Vue3-3.9.2/LICENSE` 中。
+若依框架采用 MIT 协议，原版权声明保留在 `library-backend/LICENSE` 和 `library-frontend/LICENSE` 中。

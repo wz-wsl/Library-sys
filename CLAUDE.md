@@ -6,16 +6,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 本目录是一个 git 仓库（`main` 分支），包含若依 RuoYi v3.9.2 前后端分离项目的两个独立工程，开发时需要同时运行：
 
-- `RuoYi-Vue/` —— 后端，Spring Boot 3.5 + Java 17 的 Maven 多模块工程。
-- `RuoYi-Vue3-3.9.2/` —— 前端，Vue 3 + Vite + Element Plus + Pinia。
+- `library-backend/` —— 后端，Spring Boot 3.5 + Java 17 的 Maven 多模块工程。
+- `library-frontend/` —— 前端，Vue 3 + Vite + Element Plus + Pinia。
 
-后端原本是从 gitee `y_project/RuoYi-Vue` 克隆的 springboot3 分支，它原来的 `.git` 改名保存在 `RuoYi-Vue/.git-upstream-backup/`（已加入忽略），对比或合并上游时用 `git --git-dir=RuoYi-Vue/.git-upstream-backup --work-tree=RuoYi-Vue ...`。两个子工程各自的 `.gitignore` 依然生效。
+后端原本是从 gitee `y_project/RuoYi-Vue` 克隆的 springboot3 分支，它原来的 `.git` 改名保存在 `library-backend/.git-upstream-backup/`（已加入忽略），对比或合并上游时用 `git --git-dir=library-backend/.git-upstream-backup --work-tree=library-backend ...`。两个子工程各自的 `.gitignore` 依然生效。
 
 两个工程都没有测试代码（任何模块下都没有 `src/test`），也没有 lint/格式化配置。修改后的验证方式是编译/构建，再在运行中的应用里实际操作。
 
 ## 常用命令
 
-### 后端（在 `RuoYi-Vue/` 下执行）
+### 后端（在 `library-backend/` 下执行）
 
 本机 `mvn` 不在 PATH 中，使用 IDEA 自带的 Maven：`"D:\IntelliJ IDEA 2026.2.1\plugins\maven-plugin\lib\maven3\bin\mvn.cmd"`。
 
@@ -27,7 +27,7 @@ java -jar ruoyi-admin/target/ruoyi-admin.jar  # 启动，端口 8080（或在 ID
 
 依赖从阿里云镜像下载；如果报 `Remote host terminated the handshake`，加 `-U` 重试即可。
 
-### 前端（在 `RuoYi-Vue3-3.9.2/` 下执行）
+### 前端（在 `library-frontend/` 下执行）
 
 ```bash
 npm install --registry=https://registry.npmmirror.com   # bin/*.bat 用的是 yarn，npm 也可以
@@ -39,7 +39,7 @@ npm 11 会跳过 `esbuild` 等包的 install 脚本，但已验证 esbuild 和 `
 
 ### 运行时依赖
 
-- **MySQL**：数据库名 `ry-vue`，由 `RuoYi-Vue/sql/ry_20260417.sql` 和 `RuoYi-Vue/sql/quartz.sql` 初始化。连接信息在 `ruoyi-admin/src/main/resources/application-druid.yml`。
+- **MySQL**：数据库名 `ry-vue`，由 `library-backend/sql/ry_20260417.sql` 和 `library-backend/sql/quartz.sql` 初始化。连接信息在 `ruoyi-admin/src/main/resources/application-druid.yml`。
 - **Redis**：`localhost:6379`，配置在 `application.yml`。登录离不开 Redis，验证码和登录会话都存在里面。
 - **默认账号**：`admin/admin123`。
 - **本地环境**：MySQL（root/root）和 Redis（无密码）跑在 WSL 的 Docker 容器 `mysql`、`redis` 中，端口映射到 Windows 的 3306/6379。在 WSL 里执行 `docker exec` 时，命令中的 `$VAR` 会先被 WSL 这一侧的 shell 展开，需要在容器内求值的命令要写成脚本或放进 `sh -c` 的 heredoc 里。

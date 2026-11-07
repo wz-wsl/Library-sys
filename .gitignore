@@ -1,5 +1,5 @@
 # 后端原 gitee 仓库的 .git 备份（保留上游历史，不纳入本仓库）
-RuoYi-Vue/.git-upstream-backup/
+library-backend/.git-upstream-backup/
 
 # 本地文件上传目录（application.yml 中的 ruoyi.profile）
 /upload/
