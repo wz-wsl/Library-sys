@@ -1,6 +1,6 @@
 # 图书管理系统
 
-基于 [若依 RuoYi-Vue](https://gitee.com/y_project/RuoYi-Vue) v3.9.2（前后端分离版）二次开发的图书管理系统。
+学习并借助AI基于 [若依 RuoYi-Vue](https://gitee.com/y_project/RuoYi-Vue) v3.9.2（前后端分离版）二次开发的图书管理系统。
 
 若依提供了用户、角色、菜单、部门、权限、日志等后台基础功能；在此之上，本项目手写实现了图书信息、图书分类、借书还书和读者注册等业务模块。
 
