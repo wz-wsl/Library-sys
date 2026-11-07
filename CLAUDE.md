@@ -30,7 +30,7 @@ java -jar ruoyi-admin/target/ruoyi-admin.jar  # 启动，端口 8080（或在 ID
 ### 前端（在 `RuoYi-Vue3-3.9.2/` 下执行）
 
 ```bash
-npm install --registry=https://registry.npmmirror.com   # README 和 bin/*.bat 用的是 yarn，npm 也可以
+npm install --registry=https://registry.npmmirror.com   # bin/*.bat 用的是 yarn，npm 也可以
 npm run dev          # 端口 80，把 /dev-api/* 代理到 http://localhost:8080 并去掉前缀
 npm run build:prod   # 输出到 dist/；build:stage 使用 .env.staging
 ```
