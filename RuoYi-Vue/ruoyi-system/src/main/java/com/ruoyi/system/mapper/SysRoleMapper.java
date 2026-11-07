@@ -73,6 +73,9 @@ public interface SysRoleMapper
      */
     public SysRole checkRoleKeyUnique(String roleKey);
 
+    /** 注册时读取启用的默认角色，绑定完成前保持共享锁。 */
+    public Long selectEnabledRoleIdForRegistration(String roleKey);
+
     /**
      * 修改角色信息
      * 

@@ -41,6 +41,7 @@ import com.ruoyi.system.service.ISysUserService;
 public class SysUserServiceImpl implements ISysUserService
 {
     private static final Logger log = LoggerFactory.getLogger(SysUserServiceImpl.class);
+    private static final String READER_ROLE_KEY = "reader";
 
     @Autowired
     private SysUserMapper userMapper;
@@ -277,9 +278,20 @@ public class SysUserServiceImpl implements ISysUserService
      * @return 结果
      */
     @Override
+    @Transactional
     public boolean registerUser(SysUser user)
     {
-        return userMapper.insertUser(user) > 0;
+        Long readerRoleId = roleMapper.selectEnabledRoleIdForRegistration(READER_ROLE_KEY);
+        if (readerRoleId == null)
+        {
+            throw new ServiceException("读者角色未配置或已停用，请联系管理员");
+        }
+        if (userMapper.insertUser(user) == 0)
+        {
+            return false;
+        }
+        insertUserRole(user.getUserId(), new Long[] { readerRoleId });
+        return true;
     }
 
     /**
