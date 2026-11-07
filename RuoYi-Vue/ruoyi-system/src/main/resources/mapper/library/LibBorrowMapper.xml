@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.library.mapper.LibBorrowMapper">
+    <resultMap id="LibBorrowResult" type="LibBorrow">
+        <id property="borrowId" column="borrow_id"/>
+        <result property="bookId" column="book_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="bookName" column="book_name"/>
+        <result property="userName" column="user_name"/>
+        <result property="borrowTime" column="borrow_time"/>
+        <result property="dueTime" column="due_time"/>
+        <result property="returnTime" column="return_time"/>
+        <result property="status" column="status"/>
+    </resultMap>
+
+    <select id="selectMyBorrows" resultMap="LibBorrowResult">
+        select r.borrow_id, r.book_id, r.user_id, b.book_name, u.user_name,
+               r.borrow_time, r.due_time, r.return_time,
+               case when r.return_time is not null then '1'
+                    when r.due_time &lt; now() then '2' else r.status end as status
+        from lib_borrow r
+        left join lib_book b on b.book_id = r.book_id
+        left join sys_user u on u.user_id = r.user_id
+        where r.user_id = #{userId}
+        order by r.borrow_id desc
+    </select>
+
+    <select id="countUnreturned" resultType="int">
+        select count(*) from lib_borrow
+        where book_id = #{bookId} and user_id = #{userId} and return_time is null
+    </select>
+
+    <insert id="insertBorrow" parameterType="LibBorrow">
+        insert into lib_borrow (book_id, user_id, borrow_time, due_time, status, create_by, create_time)
+        values (#{bookId}, #{userId}, now(), date_add(now(), interval 14 day), '0', #{createBy}, now())
+    </insert>
+
+    <select id="selectMyBookId" resultType="Long">
+        select book_id from lib_borrow where borrow_id = #{borrowId} and user_id = #{userId}
+    </select>
+
+    <update id="markReturned">
+        update lib_borrow set return_time = now(), status = '1', update_by = #{username}, update_time = now()
+        where borrow_id = #{borrowId} and user_id = #{userId} and return_time is null and status in ('0', '2')
+    </update>
+</mapper>
