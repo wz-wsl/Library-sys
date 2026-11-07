@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import com.ruoyi.common.annotation.DataScope;
 import com.ruoyi.common.constant.UserConstants;
+import com.ruoyi.common.core.domain.entity.SysDept;
 import com.ruoyi.common.core.domain.entity.SysRole;
 import com.ruoyi.common.core.domain.entity.SysUser;
 import com.ruoyi.common.exception.ServiceException;
@@ -23,6 +24,7 @@ import com.ruoyi.common.utils.spring.SpringUtils;
 import com.ruoyi.system.domain.SysPost;
 import com.ruoyi.system.domain.SysUserPost;
 import com.ruoyi.system.domain.SysUserRole;
+import com.ruoyi.system.mapper.SysDeptMapper;
 import com.ruoyi.system.mapper.SysPostMapper;
 import com.ruoyi.system.mapper.SysRoleMapper;
 import com.ruoyi.system.mapper.SysUserMapper;
@@ -42,9 +44,15 @@ public class SysUserServiceImpl implements ISysUserService
 {
     private static final Logger log = LoggerFactory.getLogger(SysUserServiceImpl.class);
     private static final String READER_ROLE_KEY = "reader";
+    /** 读者部门：「图书馆」(id 100) 下面名叫「读者」的部门 */
+    private static final String READER_DEPT_NAME = "读者";
+    private static final Long LIBRARY_DEPT_ID = 100L;
 
     @Autowired
     private SysUserMapper userMapper;
+
+    @Autowired
+    private SysDeptMapper deptMapper;
 
     @Autowired
     private SysRoleMapper roleMapper;
@@ -285,6 +293,12 @@ public class SysUserServiceImpl implements ISysUserService
         if (readerRoleId == null)
         {
             throw new ServiceException("读者角色未配置或已停用，请联系管理员");
+        }
+        // 放进「读者」部门。部门只用来归类，找不到或已停用时不设部门，不影响注册
+        SysDept readerDept = deptMapper.checkDeptNameUnique(READER_DEPT_NAME, LIBRARY_DEPT_ID);
+        if (readerDept != null && UserConstants.DEPT_NORMAL.equals(readerDept.getStatus()))
+        {
+            user.setDeptId(readerDept.getDeptId());
         }
         if (userMapper.insertUser(user) == 0)
         {

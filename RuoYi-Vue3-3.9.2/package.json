@@ -1,8 +1,8 @@
 {
-  "name": "ruoyi",
+  "name": "library-system",
   "version": "3.9.2",
-  "description": "若依管理系统",
-  "author": "若依",
+  "description": "图书管理系统",
+  "author": "wz-wsl",
   "license": "MIT",
   "type": "module",
   "scripts": {
